@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GlassStack</title>
+<meta name="description" content="A tiny system monitor for Windows 11: a slim taskbar strip, a 3D overview on a hotkey, and detail windows.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='4' y='19' width='24' height='6' rx='2' fill='%237c6cf0'/%3E%3Crect x='4' y='12' width='24' height='6' rx='2' fill='%23f07a4c'/%3E%3Crect x='4' y='5' width='24' height='6' rx='2' fill='%2324b38a'/%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #f4f4f8; --panel: #ffffff; --ink: #17171c; --ink2: #4b4b57; --muted: #7a7a88; --line: #e3e3ea;
+  --accent: #6d5ce8; --accent-ink: #ffffff; --chip: #ececf3; --shadow: 0 10px 40px rgba(30, 30, 60, .10);
+  --s1: #7c6cf0; --s2: #f07a4c; --s3: #24b38a; --s4: #e8a317; --s5: #e86a9a; --s6: #2f9e44; --s7: #3b82e8; --s8: #e05252;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111116; --panel: #1b1b22; --ink: #f1f1f5; --ink2: #b9b9c6; --muted: #8a8a99; --line: #2b2b35;
+    --accent: #8b7cf6; --accent-ink: #111116; --chip: #262630; --shadow: 0 10px 40px rgba(0, 0, 0, .45);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111116; --panel: #1b1b22; --ink: #f1f1f5; --ink2: #b9b9c6; --muted: #8a8a99; --line: #2b2b35;
+  --accent: #8b7cf6; --accent-ink: #111116; --chip: #262630; --shadow: 0 10px 40px rgba(0, 0, 0, .45);
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif; }
+a { color: var(--accent); }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px; }
+header.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 0; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 650; letter-spacing: .2px; }
+.brand svg { width: 26px; height: 26px; }
+.ctrls { display: flex; gap: 8px; flex-wrap: wrap; }
+.seg { display: inline-flex; background: var(--chip); border-radius: 999px; padding: 3px; }
+.seg button { border: 0; background: transparent; color: var(--ink2); font: inherit; font-size: 13px; padding: 4px 12px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--panel); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+
+.hero { padding: 36px 0 28px; display: grid; gap: 18px; }
+.hero h1 { font-size: clamp(34px, 6vw, 56px); line-height: 1.05; margin: 0; letter-spacing: -1px; }
+.hero p.lede { font-size: clamp(17px, 2.2vw, 20px); color: var(--ink2); margin: 0; max-width: 760px; }
+.stripe { display: flex; gap: 4px; height: 8px; max-width: 360px; }
+.stripe i { flex: 1; border-radius: 2px; }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 18px; border-radius: 10px; font-weight: 600; text-decoration: none; border: 1px solid var(--line); color: var(--ink); background: var(--panel); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn:hover { filter: brightness(1.05); }
+.small { font-size: 13px; color: var(--muted); }
+
+.facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 8px 0 8px; }
+.fact { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.fact b { display: block; font-size: 22px; letter-spacing: -.3px; }
+.fact span { font-size: 13px; color: var(--ink2); }
+
+section.feat { display: grid; grid-template-columns: 1fr 1.7fr; gap: 28px; align-items: center; padding: 34px 0; border-top: 1px solid var(--line); }
+section.feat:nth-of-type(even) { grid-template-columns: 1.7fr 1fr; }
+section.feat:nth-of-type(even) .txt { order: 2; }
+.feat h2 { margin: 0 0 8px; font-size: 26px; letter-spacing: -.4px; }
+.feat p { margin: 0 0 10px; color: var(--ink2); }
+.feat ul { margin: 0; padding-left: 18px; color: var(--ink2); }
+.feat > *, .facts > * { min-width: 0; }
+.shot img { width: 100%; height: auto; display: block; border-radius: 12px; box-shadow: var(--shadow); background: var(--panel); }
+.shot.flat img { box-shadow: none; background: none; }
+
+.note { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin: 10px 0 30px; }
+.note h3 { margin: 0 0 6px; font-size: 17px; }
+.note p { margin: 0; color: var(--ink2); }
+pre { background: var(--chip); border-radius: 10px; padding: 12px 14px; overflow-x: auto; font-size: 14px; }
+footer { padding: 26px 0 40px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+
+@media (max-width: 820px) {
+  .facts { grid-template-columns: repeat(2, 1fr); }
+  section.feat, section.feat:nth-of-type(even) { grid-template-columns: 1fr; gap: 16px; }
+  section.feat:nth-of-type(even) .txt { order: 0; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="19" width="24" height="6" rx="2" fill="var(--s1)"/><rect x="4" y="12" width="24" height="6" rx="2" fill="var(--s2)"/><rect x="4" y="5" width="24" height="6" rx="2" fill="var(--s3)"/></svg>
+      GlassStack
+    </div>
+    <div class="ctrls">
+      <div class="seg" id="theme" role="group" aria-label="Theme">
+        <button data-v="light" data-i18n="light">Light</button><button data-v="dark" data-i18n="dark">Dark</button>
+      </div>
+      <div class="seg" id="lang" role="group" aria-label="Language">
+        <button data-v="en">EN</button><button data-v="tr">TR</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div class="stripe" aria-hidden="true"><i style="background:var(--s1)"></i><i style="background:var(--s2)"></i><i style="background:var(--s3)"></i><i style="background:var(--s4)"></i><i style="background:var(--s5)"></i><i style="background:var(--s6)"></i><i style="background:var(--s7)"></i><i style="background:var(--s8)"></i></div>
+    <h1 data-i18n="h1">Your PC at a glance, right on the taskbar.</h1>
+    <p class="lede" data-i18n="lede">A tiny system monitor for Windows 11: a slim strip on the taskbar, a 3D overview on a hotkey, and detail windows that show what is behind every number.</p>
+    <div class="actions">
+      <a class="btn primary" href="https://github.com/erenciracioglu-dotcom/GlassStack/releases/latest" data-i18n="dl">Download for Windows</a>
+      <a class="btn" href="https://github.com/erenciracioglu-dotcom/GlassStack" data-i18n="src">Source code</a>
+      <span class="small" data-i18n="dlnote">Zip with one exe · Windows 11, x64 · MIT license</span>
+    </div>
+  </div>
+
+  <div class="facts">
+    <div class="fact"><b>~2 MB</b><span data-i18n="f1">memory while running in the background</span></div>
+    <div class="fact"><b>&lt;1 %</b><span data-i18n="f2">of one CPU core for sampling and the strip</span></div>
+    <div class="fact"><b>1 exe</b><span data-i18n="f3">about 580 KB, no installer, no runtime</span></div>
+    <div class="fact"><b>0</b><span data-i18n="f4">things left behind when you delete the folder</span></div>
+  </div>
+
+  <section class="feat">
+    <div class="txt">
+      <h2 data-i18n="s1h">The strip</h2>
+      <p data-i18n="s1p">An 8-pixel strip stacked on the taskbar, one coloured slot per metric: memory, GPU memory and workload, two disks, Wi-Fi and CPU. No text, just shape and colour.</p>
+      <p data-i18n="s1q">Rest the pointer on it for a second and every value pops up. Click a slot to open its details.</p>
+    </div>
+    <div class="shot flat"><img data-src="popup" width="1280" height="533" alt="Strip with its popup"></div>
+  </section>
+
+  <section class="feat">
+    <div class="txt">
+      <h2 data-i18n="s2h">The 3D overview</h2>
+      <p data-i18n="s2p">Hold Ctrl+Shift and press Space: every graph appears as a frosted-glass card. Tap Space to move through the deck, let go to open the focused one.</p>
+    </div>
+    <div class="shot"><img data-src="overview" width="1600" height="1000" alt="3D overview"></div>
+  </section>
+
+  <section class="feat">
+    <div class="txt">
+      <h2 data-i18n="s3h">The details</h2>
+      <p data-i18n="s3p">Each area gets a window with its large graph, every related graph, a details panel and the processes behind the numbers.</p>
+      <ul>
+        <li data-i18n="s3a">Click any small graph to make it the large one; the strip follows.</li>
+        <li data-i18n="s3b">Point at a graph for the exact value at any moment.</li>
+        <li data-i18n="s3c">End a task, open its folder, spot a handle leak.</li>
+      </ul>
+    </div>
+    <div class="shot flat"><img data-src="details" width="1400" height="885" alt="Detail window"></div>
+  </section>
+
+  <div class="note">
+    <h3 data-i18n="n1h">First start</h3>
+    <p data-i18n="n1p">Unzip anywhere and run GlassStack.exe. The exe is not code-signed, so Windows SmartScreen may warn the first time: choose “More info”, then “Run anyway”. Or build it yourself from the source:</p>
+    <pre>git clone https://github.com/erenciracioglu-dotcom/GlassStack.git
+cd GlassStack
+build.bat</pre>
+  </div>
+
+  <footer>
+    <span data-i18n="foot">Made by</span> <a href="https://erenciracioglu-dotcom.github.io/">erenciracioglu-dotcom</a> · <a href="https://github.com/erenciracioglu-dotcom/GlassStack/blob/main/LICENSE">MIT</a>
+  </footer>
+</div>
+
+<script>
+const T = {
+  en: {
+    light: 'Light', dark: 'Dark',
+    h1: 'Your PC at a glance, right on the taskbar.',
+    lede: 'A tiny system monitor for Windows 11: a slim strip on the taskbar, a 3D overview on a hotkey, and detail windows that show what is behind every number.',
+    dl: 'Download for Windows', src: 'Source code', dlnote: 'Zip with one exe · Windows 11, x64 · MIT license',
+    f1: 'memory while running in the background', f2: 'of one CPU core for sampling and the strip',
+    f3: 'about 580 KB, no installer, no runtime', f4: 'things left behind when you delete the folder',
+    s1h: 'The strip', s1p: 'An 8-pixel strip stacked on the taskbar, one coloured slot per metric: memory, GPU memory and workload, two disks, Wi-Fi and CPU. No text, just shape and colour.',
+    s1q: 'Rest the pointer on it for a second and every value pops up. Click a slot to open its details.',
+    s2h: 'The 3D overview', s2p: 'Hold Ctrl+Shift and press Space: every graph appears as a frosted-glass card. Tap Space to move through the deck, let go to open the focused one.',
+    s3h: 'The details', s3p: 'Each area gets a window with its large graph, every related graph, a details panel and the processes behind the numbers.',
+    s3a: 'Click any small graph to make it the large one; the strip follows.', s3b: 'Point at a graph for the exact value at any moment.', s3c: 'End a task, open its folder, spot a handle leak.',
+    n1h: 'First start', n1p: 'Unzip anywhere and run GlassStack.exe. The exe is not code-signed, so Windows SmartScreen may warn the first time: choose “More info”, then “Run anyway”. Or build it yourself from the source:',
+    foot: 'Made by'
+  },
+  tr: {
+    light: 'Açık', dark: 'Koyu',
+    h1: 'Bilgisayarın bir bakışta, görev çubuğunun üstünde.',
+    lede: 'Windows 11 için küçük bir sistem izleyici: görev çubuğunda ince bir şerit, kısayolla açılan 3B genel bakış ve her sayının arkasında ne olduğunu gösteren detay pencereleri.',
+    dl: 'Windows için indir', src: 'Kaynak kod', dlnote: 'Tek exe içeren zip · Windows 11, x64 · MIT lisansı',
+    f1: 'arka planda çalışırken bellek', f2: 'ölçüm ve şerit için bir CPU çekirdeğinin', 
+    f3: 'yaklaşık 580 KB, kurulum yok, ek çalışma ortamı yok', f4: 'klasörü silince geride kalan şey',
+    s1h: 'Şerit', s1p: 'Görev çubuğunun üstüne yerleşen 8 piksellik bir şerit; her ölçüm için renkli bir bölme: bellek, GPU belleği ve yükü, iki disk, Wi-Fi ve CPU. Yazı yok, yalnızca şekil ve renk.',
+    s1q: 'İmleci bir saniye üzerinde tut, tüm değerler açılsın. Bir bölmeye tıkla, detayları gelsin.',
+    s2h: '3B genel bakış', s2p: 'Ctrl+Shift basılıyken Space: her grafik buzlu cam bir kart olarak dizilir. Space ile kartlar arasında gez, bırakınca seçili kart açılır.',
+    s3h: 'Detaylar', s3p: 'Her alanın kendi penceresi var: büyük grafik, ilgili tüm grafikler, bir ayrıntı paneli ve sayıların arkasındaki işlemler.',
+    s3a: 'Herhangi bir küçük grafiğe tıkla, büyük grafik o olsun; şerit de onu göstersin.', s3b: 'Grafiğin üzerine gel, herhangi bir anın tam değerini gör.', s3c: 'Bir işlemi sonlandır, klasörünü aç, handle sızıntısını yakala.',
+    n1h: 'İlk açılış', n1p: 'Zip\'i istediğin yere çıkar ve GlassStack.exe\'yi çalıştır. Exe dijital imzalı olmadığı için Windows SmartScreen ilk seferde uyarabilir: “Ek bilgi”, ardından “Yine de çalıştır”. Ya da kaynak koddan kendin derle:',
+    foot: 'Yapan'
+  }
+};
+let lang = 'en', theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+try { lang = localStorage.getItem('lang') || (navigator.language || '').startsWith('tr') && 'tr' || 'en'; } catch (e) {}
+try { theme = localStorage.getItem('gs-theme') || theme; } catch (e) {}
+if (!T[lang]) lang = 'en';
+function render() {
+  document.documentElement.lang = lang;
+  document.documentElement.dataset.theme = theme;
+  document.querySelectorAll('[data-i18n]').forEach(n => { n.textContent = T[lang][n.dataset.i18n]; });
+  document.querySelectorAll('img[data-src]').forEach(i => { i.src = `screenshots/${i.dataset.src}-${theme}.png`; });
+  document.querySelectorAll('#lang button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === lang));
+  document.querySelectorAll('#theme button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === theme));
+}
+document.getElementById('lang').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; lang = b.dataset.v; try { localStorage.setItem('lang', lang); } catch (e) {} render(); });
+document.getElementById('theme').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; theme = b.dataset.v; try { localStorage.setItem('gs-theme', theme); } catch (e) {} render(); });
+render();
+</script>
+</body>
+</html>
