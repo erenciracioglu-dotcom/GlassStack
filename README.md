@@ -26,7 +26,7 @@
 2. Unzip it into any folder you like, for example `C:\Tools\GlassStack`.
 3. Run `GlassStack.exe`.
 
-That is all: one ~540 KB file, no installer and no runtime to install. Settings are written to `GlassStack.ini`
+That is all: one ~580 KB file, no installer and no runtime to install. Settings are written to `GlassStack.ini`
 next to the exe. To start it with Windows, right-click the strip or the tray icon and tick *Start with Windows*.
 
 The exe is not code-signed, so the first time Windows SmartScreen may say *"Windows protected your PC"*. Click
@@ -182,7 +182,7 @@ folder. Nothing else is left behind.
 2. İstediğin bir klasöre çıkar, örneğin `C:\Tools\GlassStack`.
 3. `GlassStack.exe`'yi çalıştır.
 
-Bu kadar: yaklaşık 540 KB'lık tek bir dosya; kurulum yok, ayrıca kurulacak bir çalışma ortamı yok. Ayarlar exe'nin
+Bu kadar: yaklaşık 580 KB'lık tek bir dosya; kurulum yok, ayrıca kurulacak bir çalışma ortamı yok. Ayarlar exe'nin
 yanındaki `GlassStack.ini` dosyasına yazılır. Windows ile başlaması için şeride veya tepsi simgesine sağ tıklayıp
 *Start with Windows*'u işaretle.
 
