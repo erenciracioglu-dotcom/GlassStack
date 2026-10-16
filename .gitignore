@@ -1,0 +1,12 @@
+# build output
+bin/
+obj/
+*.obj
+*.res
+*.pdb
+# local test output and development scripts
+tests/
+tools/*
+!tools/readme_shots.py
+*.ini
+GlassStack-diag.txt
